@@ -1,0 +1,164 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
+
+export default function Home() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [memories, setMemories] = useState([]);
+  const [allTags, setAllTags] = useState([]);
+  const [activeTag, setActiveTag] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/login');
+      } else {
+        setCheckingAuth(false);
+      }
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) router.replace('/login');
+    });
+    return () => listener.subscription.unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (checkingAuth) return;
+    loadTags();
+    loadMemories();
+  }, [activeTag, checkingAuth]);
+
+  async function loadTags() {
+    const { data } = await supabase.from('tags').select('*').order('name');
+    setAllTags(data || []);
+  }
+
+  async function loadMemories() {
+    setLoading(true);
+    let query = supabase
+      .from('memories')
+      .select('*, memory_tags(tag_id, tags(name))')
+      .order('taken_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false });
+
+    const { data, error } = await query;
+    if (!error && data) {
+      let filtered = data;
+      if (activeTag) {
+        filtered = data.filter((m) =>
+          m.memory_tags.some((mt) => mt.tags?.name === activeTag)
+        );
+      }
+      const withUrls = await Promise.all(
+        filtered.map(async (m) => {
+          const { data: signed } = await supabase.storage
+            .from('memories')
+            .createSignedUrl(m.storage_path, 3600);
+          return { ...m, url: signed?.signedUrl };
+        })
+      );
+      setMemories(withUrls);
+    }
+    setLoading(false);
+  }
+
+  async function handleDelete(memory) {
+    const confirmed = window.confirm('Delete this memory? This cannot be undone.');
+    if (!confirmed) return;
+
+    setDeletingId(memory.id);
+
+    const { error: storageError } = await supabase.storage
+      .from('memories')
+      .remove([memory.storage_path]);
+
+    if (storageError) {
+      alert(`Could not delete file: ${storageError.message}`);
+      setDeletingId(null);
+      return;
+    }
+
+    const { error: dbError } = await supabase
+      .from('memories')
+      .delete()
+      .eq('id', memory.id);
+
+    if (dbError) {
+      alert(`File deleted, but failed to remove record: ${dbError.message}`);
+      setDeletingId(null);
+      return;
+    }
+
+    setMemories((prev) => prev.filter((m) => m.id !== memory.id));
+    setDeletingId(null);
+  }
+
+  const groups = memories.reduce((acc, m) => {
+    const day = (m.taken_at || m.created_at || '').slice(0, 10) || 'Undated';
+    acc[day] = acc[day] || [];
+    acc[day].push(m);
+    return acc;
+  }, {});
+
+  if (checkingAuth) return <p>Loading...</p>;
+
+  return (
+    <div>
+      <div className="tag-search">
+        <span
+          className={`tag-pill ${!activeTag ? 'active' : ''}`}
+          onClick={() => setActiveTag(null)}
+        >
+          All
+        </span>
+        {allTags.map((t) => (
+          <span
+            key={t.id}
+            className={`tag-pill ${activeTag === t.name ? 'active' : ''}`}
+            onClick={() => setActiveTag(t.name)}
+          >
+            {t.name}
+          </span>
+        ))}
+      </div>
+
+      {loading && <p>Loading...</p>}
+      {!loading && memories.length === 0 && (
+        <div className="empty-state">
+          <h2>The vault is empty.</h2>
+          <p>Every archive starts with one print. Upload your first memory to begin the timeline.</p>
+          <a href="/upload" className="empty-cta">Add a memory →</a>
+        </div>
+      )}
+
+      {Object.entries(groups).map(([day, items]) => (
+        <div key={day} className="day-group">
+          <div className="day-heading">{day}</div>
+          <div className="grid">
+            {items.map((m) => (
+              <div className="memory-item" key={m.id}>
+                {m.media_type === 'video' ? (
+                  <video src={m.url} controls title={m.caption} />
+                ) : (
+                  <img src={m.url} alt={m.caption || ''} title={m.caption} />
+                )}
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDelete(m)}
+                  disabled={deletingId === m.id}
+                  title="Delete this memory"
+                >
+                  {deletingId === m.id ? '...' : '✕'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
