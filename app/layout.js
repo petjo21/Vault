@@ -3,8 +3,8 @@ import NavBar from '../components/NavBar';
 import InviteBanner from '../components/InviteBanner';
 
 export const metadata = {
-  title: 'Memory Vault',
-  description: 'Your personal photo and video memories',
+  title: 'Sam & Bella Memories',
+  description: 'Memories that will last a lifetime and beyond',
 };
 
 export default function RootLayout({ children }) {
