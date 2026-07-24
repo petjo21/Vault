@@ -47,13 +47,7 @@ export default function NavBar() {
       )}
       {loggedIn ? (
         <div className="settings-menu" ref={menuRef} style={{ marginLeft: 'auto' }}>
-          <button
-            className="settings-icon-btn"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            title="Settings"
-          >
-            
-          </button>
+          <button className="settings-icon-btn" onClick={() => setMenuOpen((prev) => !prev)} title="Settings">Settings</button>
           {menuOpen && (
             <div className="settings-dropdown">
               <a href="/change-password" className="settings-dropdown-item" onClick={() => setMenuOpen(false)}>Change Password</a>
