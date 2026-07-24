@@ -403,3 +403,25 @@ main > p { color: var(--ink-dim); }
   justify-content: center;
 }
 .lightbox-close:hover { background: rgba(255, 255, 255, 0.3); }
+.password-field {
+  position: relative;
+  display: flex;
+}
+.password-field input {
+  flex: 1;
+  padding-right: 3.2rem;
+}
+.password-toggle {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+  cursor: pointer;
+  line-height: 1;
+}
+.password-toggle:hover { background: transparent; color: var(--ink); }
