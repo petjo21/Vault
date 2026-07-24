@@ -548,3 +548,72 @@ button:not(.delete-btn):not(.pill-delete):not(.thumb-remove):hover {
   box-shadow: 0 10px 30px rgba(60,64,67,0.10);
   z-index: 1;
 }
+/* ---------- Reference-inspired redesign: navy + coral, bold type ---------- */
+:root {
+  --accent: #232150;
+  --accent-hover: #171540;
+  --accent-soft: #ece9fb;
+  --coral: #f4a3a8;
+  --coral-soft: #fdeeee;
+}
+
+h1, h2, h3 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+body {
+  background: linear-gradient(180deg, #fdf3f0 0%, #ffffff 260px);
+}
+
+.nav { border-bottom: 1px solid var(--line); }
+.nav a.active { border-bottom-color: var(--accent); }
+
+button {
+  background: var(--accent);
+  font-weight: 700;
+  border-radius: 12px;
+}
+button:hover { background: var(--accent-hover); }
+
+.tag-pill.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.folder-pill.active { background: var(--coral-soft); border-color: var(--coral); color: #c2373f; }
+
+.grid img, .grid video {
+  border-radius: 18px;
+}
+.memory-item { border-radius: 18px; overflow: hidden; }
+
+.day-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.day-count {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--ink-dim);
+  margin-left: 0.35rem;
+}
+
+.auth-page {
+  background: linear-gradient(160deg, #fdeeee 0%, #fdf3f0 45%, #eef2fb 100%);
+}
+.auth-page::after {
+  background:
+    radial-gradient(circle at 12% 20%, rgba(244,163,168,0.25), transparent 24%),
+    radial-gradient(circle at 85% 15%, rgba(251,188,5,0.14), transparent 24%),
+    radial-gradient(circle at 20% 85%, rgba(35,33,80,0.08), transparent 26%),
+    radial-gradient(circle at 90% 80%, rgba(244,163,168,0.22), transparent 26%);
+}
+.auth-logo {
+  background: linear-gradient(135deg, #232150, #4a4790);
+  border-radius: 14px;
+}
+.empty-cta { background: var(--accent); box-shadow: 0 2px 8px rgba(35,33,80,0.3); }
+.empty-cta:hover { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(35,33,80,0.35); }
+.empty-state h2 {
+  background: linear-gradient(90deg, #232150, #f4a3a8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

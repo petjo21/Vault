@@ -236,7 +236,10 @@ function VaultView() {
 
       {Object.entries(groups).map(([day, items]) => (
         <div key={day} className="day-group">
-          <div className="day-heading">{day}</div>
+          <div className="day-heading">
+              {day}
+              <span className="day-count">{items.length} {items.length === 1 ? 'photo' : 'photos'}</span>
+            </div>
           <div className="grid">
             {items.map((m) => (
               <div
