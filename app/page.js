@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const viewingOwnerId = searchParams.get('vault');
@@ -360,5 +360,12 @@ export default function Home() {
         </div>
       ))}
     </div>
+  );
+}
+export default function Home() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <HomeContent />
+    </Suspense>
   );
 }
