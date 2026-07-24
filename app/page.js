@@ -134,6 +134,23 @@ function VaultView() {
     setDeletingId(null);
     if (lightboxItem?.id === memory.id) setLightboxItem(null);
   }
+  async function handleDeleteTag(e, tag) {
+    e.stopPropagation();
+    const confirmed = window.confirm(
+      `Delete the tag "${tag.name}"? It will be removed from any memories that have it.`
+    );
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('tags').delete().eq('id', tag.id);
+
+    if (error) {
+      alert(`Could not delete tag: ${error.message}`);
+      return;
+    }
+
+    if (activeTag === tag.name) setActiveTag(null);
+    setAllTags((prev) => prev.filter((t) => t.id !== tag.id));
+  }
 
   async function handleDeleteAlbum(e, album) {
     e.stopPropagation();
@@ -220,14 +237,21 @@ function VaultView() {
             All tags
           </span>
           {allTags.map((t) => (
-            <span
-              key={t.id}
-              className={`tag-pill ${activeTag === t.name ? 'active' : ''}`}
-              onClick={() => setActiveTag(t.name)}
+          <span
+            key={t.id}
+            className={`tag-pill folder-pill ${activeTag === t.name ? 'active' : ''}`}
+            onClick={() => setActiveTag(t.name)}
+          >
+            {t.name}
+            <button
+              className="pill-delete"
+              onClick={(e) => handleDeleteTag(e, t)}
+              title="Delete this tag"
             >
-              {t.name}
-            </span>
-          ))}
+              ✕
+            </button>
+          </span>
+        ))}
         </div>
       </div>
 
