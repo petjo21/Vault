@@ -496,3 +496,55 @@ button:not(.delete-btn):not(.pill-delete):not(.thumb-remove):hover {
 .grid img, .grid video {
   box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(60,64,67,0.08);
 }
+/* ---------- Photo-wall backdrop for the auth page ---------- */
+.auth-page {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #eef2f7 0%, #f7f4ef 50%, #fef6ec 100%);
+}
+.auth-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(66,133,244,0.05) 0 2px, transparent 2px 40px),
+    repeating-linear-gradient(-45deg, rgba(234,67,53,0.04) 0 2px, transparent 2px 46px);
+  opacity: 0.6;
+}
+.auth-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(66,133,244,0.10), transparent 22%),
+    radial-gradient(circle at 85% 15%, rgba(251,188,5,0.12), transparent 24%),
+    radial-gradient(circle at 20% 85%, rgba(52,168,83,0.10), transparent 24%),
+    radial-gradient(circle at 90% 80%, rgba(234,67,53,0.10), transparent 24%);
+}
+.auth-card {
+  position: relative;
+  z-index: 2;
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 20px 50px rgba(60,64,67,0.12);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+.auth-card .form {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin-top: 1.5rem;
+}
+
+.photo-deco {
+  position: absolute;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow: 0 10px 30px rgba(60,64,67,0.10);
+  z-index: 1;
+}
