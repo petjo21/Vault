@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
@@ -52,23 +52,12 @@ export default function NavBar() {
             onClick={() => setMenuOpen((prev) => !prev)}
             title="Settings"
           >
-            ⚙️
+            
           </button>
           {menuOpen && (
             <div className="settings-dropdown">
-              
-                href="/change-password"
-                className="settings-dropdown-item"
-                onClick={() => setMenuOpen(false)}
-              >
-                Change Password
-              </a>
-              <button
-                className="settings-dropdown-item settings-dropdown-danger"
-                onClick={handleLogout}
-              >
-                Log out
-              </button>
+              <a href="/change-password" className="settings-dropdown-item" onClick={() => setMenuOpen(false)}>Change Password</a>
+              <button className="settings-dropdown-item settings-dropdown-danger" onClick={handleLogout}>Log out</button>
             </div>
           )}
         </div>
