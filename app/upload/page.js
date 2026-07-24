@@ -150,7 +150,10 @@ export default function Upload() {
 
   return (
     <form className="form" onSubmit={handleUpload}>
-      <h2>Add memories</h2>
+      <div className="form-header">
+        <span className="form-icon">🖼️</span>
+        <h2>Add memories</h2>
+      </div>
 
       <label
         className={`dropzone ${dragActive ? 'active' : ''}`}
@@ -159,6 +162,7 @@ export default function Upload() {
         onDrop={handleDrop}
       >
         <div className="dropzone-hint">
+          <span className="dropzone-emoji">📷</span>
           <span>Drag photos or videos here</span>
           <span className="dropzone-sub">or click to browse — you can select several at once</span>
         </div>
@@ -186,12 +190,14 @@ export default function Upload() {
           ))}
         </div>
       )}
-
-      <input type="text" placeholder="Caption (applied to all)" value={caption} onChange={(e) => setCaption(e.target.value)} />
+<label className="field-label">📝 Caption</label>
+      <input type="text" placeholder="What's happening in this memory?" value={caption} onChange={(e) => setCaption(e.target.value)} />
+      <label className="field-label">📅 Date</label>
       <input type="date" value={takenAt} onChange={(e) => setTakenAt(e.target.value)} />
-      <input type="text" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
+      <label className="field-label">🏷️ Tags</label>
+      <input type="text" placeholder="beach, family, summer" value={tags} onChange={(e) => setTags(e.target.value)} />
 
-      <label className="field-label">Folder / Album</label>
+      <label className="field-label">📁 Folder / Album</label>
       <select
         value={albumChoice}
         onChange={(e) => { setAlbumChoice(e.target.value); setNewAlbumName(''); }}

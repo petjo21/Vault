@@ -668,3 +668,38 @@ button:hover { background: var(--accent-hover); }
 .bottom-nav-icon { font-size: 1.3rem; line-height: 1; }
 
 main { padding-bottom: 6rem; }
+/* ---------- Upload page polish (final overrides, loaded last on purpose) ---------- */
+.form { border-top: 5px solid var(--accent); overflow: hidden; }
+.form-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.25rem; }
+.form-icon { font-size: 1.6rem; }
+.form h2 { margin: 0; }
+
+.dropzone-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+
+.field-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 0.6rem;
+  margin-bottom: -0.35rem;
+}
+
+.form button[type="submit"] {
+  background: var(--accent) !important;
+  color: #fff !important;
+  font-weight: 900;
+  font-size: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(240,114,58,0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.form button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(240,114,58,0.45);
+  background: var(--accent-hover) !important;
+}
+.form button[type="submit"]:disabled {
+  background: #d8d0c8 !important;
+  box-shadow: none;
+}
