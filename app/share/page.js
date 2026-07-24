@@ -96,6 +96,9 @@ export default function Share() {
               <span className={`share-status ${s.shared_with_user_id ? 'accepted' : 'pending'}`}>
                 {s.shared_with_user_id ? 'Active' : 'Pending'}
               </span>
+              {s.shared_with_user_id && (
+                <a href={`/chat?with=${s.shared_with_user_id}`} className="chat-link">💬 Chat</a>
+              )}
               <button className="pill-delete" onClick={() => revoke(s.id)} title="Remove access">✕</button>
             </div>
           ))}
@@ -108,6 +111,7 @@ export default function Share() {
           {sharedWithMe.map((s) => (
             <div key={s.id} className="share-row">
               <span>Owner ID: {s.owner_id.slice(0, 8)}...</span>
+              <a href={`/chat?with=${s.owner_id}`} className="chat-link">💬 Chat</a>
               <a href={`/?vault=${s.owner_id}`} className="empty-cta" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}>
                 View
               </a>

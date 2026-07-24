@@ -754,3 +754,62 @@ main { padding-bottom: 6rem; }
   background: var(--accent);
   border-color: var(--accent);
 }
+/* ---------- Chat ---------- */
+.chat-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.chat-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 220px);
+  max-width: 560px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.chat-thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.chat-bubble {
+  max-width: 70%;
+  padding: 0.6rem 0.95rem;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.chat-bubble.mine {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.chat-bubble.theirs {
+  align-self: flex-start;
+  background: var(--bg-soft, #f1f1f1);
+  color: var(--ink);
+  border-bottom-left-radius: 4px;
+}
+.chat-input-row {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+.chat-input-row input {
+  flex: 1;
+  border-radius: 999px;
+}
+.chat-input-row button {
+  border-radius: 999px;
+  padding: 0.6rem 1.3rem;
+}
