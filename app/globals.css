@@ -703,3 +703,54 @@ main { padding-bottom: 6rem; }
   background: #d8d0c8 !important;
   box-shadow: none;
 }
+/* ---------- Multi-select toolbar and checkboxes ---------- */
+.select-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.select-toggle {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+}
+.select-toggle:hover { background: var(--bg-soft, #f8f9fa); box-shadow: none; }
+.bulk-delete-btn {
+  background: #d93025 !important;
+  color: #fff !important;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+}
+.bulk-delete-btn:hover:not(:disabled) { background: #b0271e !important; }
+.bulk-delete-btn:disabled { opacity: 0.5; }
+
+.memory-item.selected {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 18px;
+}
+.select-checkbox {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.memory-item.selected .select-checkbox {
+  background: var(--accent);
+  border-color: var(--accent);
+}
