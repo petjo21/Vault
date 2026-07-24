@@ -1,9 +1,17 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Home() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <VaultView />
+    </Suspense>
+  );
+}
+
+function VaultView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const viewingOwnerId = searchParams.get('vault');
