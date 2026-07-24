@@ -1,5 +1,6 @@
 import './globals.css';
 import NavBar from '../components/NavBar';
+import BottomNav from '../components/BottomNav';
 import InviteBanner from '../components/InviteBanner';
 
 export const metadata = {
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
         <NavBar />
         <InviteBanner />
         <main>{children}</main>
+        <BottomNav />
       </body>
     </html>
   );

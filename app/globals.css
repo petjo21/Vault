@@ -617,3 +617,54 @@ button:hover { background: var(--accent-hover); }
   background-clip: text;
   color: transparent;
 }
+/* ---------- Search bar (Discover-style) ---------- */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #fff;
+  border: 1px solid #f0e2d4;
+  border-radius: 999px;
+  padding: 0.65rem 1.1rem;
+  margin-bottom: 1.5rem;
+  max-width: 420px;
+}
+.search-icon { color: var(--ink-dim); font-size: 1rem; }
+.search-bar input {
+  border: none;
+  padding: 0;
+  flex: 1;
+  font-size: 0.9rem;
+}
+.search-bar input:focus { outline: none; box-shadow: none; }
+
+/* ---------- Bottom floating icon nav ---------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  background: var(--dark-pill, #211d1a);
+  border-radius: 999px;
+  padding: 0.6rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  z-index: 20;
+}
+.bottom-nav-item {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bottom-nav-item:hover { color: #fff; box-shadow: none; }
+.bottom-nav-item.active { background: var(--accent, #f0723a); color: #fff; }
+.bottom-nav-icon { font-size: 1.3rem; line-height: 1; }
+
+main { padding-bottom: 6rem; }

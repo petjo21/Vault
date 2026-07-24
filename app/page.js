@@ -22,6 +22,7 @@ function VaultView() {
   const [albums, setAlbums] = useState([]);
   const [activeTag, setActiveTag] = useState(null);
   const [activeAlbum, setActiveAlbum] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [deletingAlbumId, setDeletingAlbumId] = useState(null);
@@ -47,7 +48,7 @@ function VaultView() {
     loadTags();
     loadAlbums();
     loadMemories();
-  }, [activeTag, activeAlbum, checkingAuth, viewingOwnerId, myUserId]);
+ }, [activeTag, activeAlbum, checkingAuth, viewingOwnerId, myUserId, searchTerm]);
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -88,11 +89,7 @@ function VaultView() {
     const { data, error } = await query;
     if (!error && data) {
       let filtered = data;
-      if (activeTag) {
-        filtered = data.filter((m) =>
-          m.memory_tags.some((mt) => mt.tags?.name === activeTag)
-        );
-      }
+      
       const withUrls = await Promise.all(
         filtered.map(async (m) => {
           const { data: signed } = await supabase.storage
@@ -173,6 +170,15 @@ function VaultView() {
 
   return (
     <div>
+      <div className="search-bar">
+        <span className="search-icon">⌕</span>
+        <input
+          type="text"
+          placeholder="Search captions..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       {albums.length > 0 && (
         <div className="filter-section">
           <div className="filter-label">Folders</div>
