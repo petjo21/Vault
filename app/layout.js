@@ -1,5 +1,6 @@
 import './globals.css';
 import NavBar from '../components/NavBar';
+import InviteBanner from '../components/InviteBanner';
 
 export const metadata = {
   title: 'Memory Vault',
@@ -11,6 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <NavBar />
+        <InviteBanner />
         <main>{children}</main>
       </body>
     </html>
