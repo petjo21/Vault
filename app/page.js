@@ -25,6 +25,7 @@ function VaultView() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [deletingAlbumId, setDeletingAlbumId] = useState(null);
+  const [lightboxItem, setLightboxItem] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -47,6 +48,14 @@ function VaultView() {
     loadAlbums();
     loadMemories();
   }, [activeTag, activeAlbum, checkingAuth, viewingOwnerId, myUserId]);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') setLightboxItem(null);
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   async function loadTags() {
     const ownerId = viewingOwnerId || myUserId;
@@ -126,6 +135,7 @@ function VaultView() {
 
     setMemories((prev) => prev.filter((m) => m.id !== memory.id));
     setDeletingId(null);
+    if (lightboxItem?.id === memory.id) setLightboxItem(null);
   }
 
   async function handleDeleteAlbum(e, album) {
@@ -164,49 +174,55 @@ function VaultView() {
   return (
     <div>
       {albums.length > 0 && (
-        <div className="tag-search">
-          <span
-            className={`tag-pill folder-pill ${!activeAlbum ? 'active' : ''}`}
-            onClick={() => setActiveAlbum(null)}
-          >
-            All folders
-          </span>
-          {albums.map((a) => (
+        <div className="filter-section">
+          <div className="filter-label">Folders</div>
+          <div className="tag-search">
             <span
-              key={a.id}
-              className={`tag-pill folder-pill ${activeAlbum === a.id ? 'active' : ''}`}
-              onClick={() => setActiveAlbum(a.id)}
+              className={`tag-pill folder-pill ${!activeAlbum ? 'active' : ''}`}
+              onClick={() => setActiveAlbum(null)}
             >
-              📁 {a.name}
-              <button
-                className="pill-delete"
-                onClick={(e) => handleDeleteAlbum(e, a)}
-                disabled={deletingAlbumId === a.id}
-                title="Delete this folder"
-              >
-                {deletingAlbumId === a.id ? '...' : '✕'}
-              </button>
+              All folders
             </span>
-          ))}
+            {albums.map((a) => (
+              <span
+                key={a.id}
+                className={`tag-pill folder-pill ${activeAlbum === a.id ? 'active' : ''}`}
+                onClick={() => setActiveAlbum(a.id)}
+              >
+                📁 {a.name}
+                <button
+                  className="pill-delete"
+                  onClick={(e) => handleDeleteAlbum(e, a)}
+                  disabled={deletingAlbumId === a.id}
+                  title="Delete this folder"
+                >
+                  {deletingAlbumId === a.id ? '...' : '✕'}
+                </button>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
-      <div className="tag-search">
-        <span
-          className={`tag-pill ${!activeTag ? 'active' : ''}`}
-          onClick={() => setActiveTag(null)}
-        >
-          All tags
-        </span>
-        {allTags.map((t) => (
+      <div className="filter-section">
+        <div className="filter-label">Tags</div>
+        <div className="tag-search">
           <span
-            key={t.id}
-            className={`tag-pill ${activeTag === t.name ? 'active' : ''}`}
-            onClick={() => setActiveTag(t.name)}
+            className={`tag-pill ${!activeTag ? 'active' : ''}`}
+            onClick={() => setActiveTag(null)}
           >
-            {t.name}
+            All tags
           </span>
-        ))}
+          {allTags.map((t) => (
+            <span
+              key={t.id}
+              className={`tag-pill ${activeTag === t.name ? 'active' : ''}`}
+              onClick={() => setActiveTag(t.name)}
+            >
+              {t.name}
+            </span>
+          ))}
+        </div>
       </div>
 
       {loading && <p>Loading...</p>}
@@ -223,16 +239,23 @@ function VaultView() {
           <div className="day-heading">{day}</div>
           <div className="grid">
             {items.map((m) => (
-              <div className="memory-item" key={m.id}>
+              <div
+                className="memory-item"
+                key={m.id}
+                onClick={() => setLightboxItem(m)}
+              >
                 {m.media_type === 'video' ? (
-                  <video src={m.url} controls title={m.caption} />
+                  <video src={m.url} title={m.caption} />
                 ) : (
                   <img src={m.url} alt={m.caption || ''} title={m.caption} />
                 )}
                 {!isReadOnly && (
                   <button
                     className="delete-btn"
-                    onClick={() => handleDelete(m)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(m);
+                    }}
                     disabled={deletingId === m.id}
                     title="Delete this memory"
                   >
@@ -244,6 +267,28 @@ function VaultView() {
           </div>
         </div>
       ))}
+
+      {lightboxItem && (
+        <div className="lightbox-overlay" onClick={() => setLightboxItem(null)}>
+          <button
+            className="lightbox-close"
+            onClick={() => setLightboxItem(null)}
+            title="Close"
+          >
+            ✕
+          </button>
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            {lightboxItem.media_type === 'video' ? (
+              <video src={lightboxItem.url} controls autoPlay />
+            ) : (
+              <img src={lightboxItem.url} alt={lightboxItem.caption || ''} />
+            )}
+            {lightboxItem.caption && (
+              <p className="lightbox-caption">{lightboxItem.caption}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

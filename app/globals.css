@@ -353,3 +353,53 @@ main > p { color: var(--ink-dim); }
 }
 .memory-item:hover .delete-btn { opacity: 1; }
 .delete-btn:hover { background: #d93025; }
+/* ---------- Lightbox ---------- */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 2rem;
+  cursor: zoom-out;
+}
+.lightbox-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: default;
+}
+.lightbox-content img,
+.lightbox-content video {
+  max-width: 90vw;
+  max-height: 82vh;
+  border-radius: 8px;
+  object-fit: contain;
+  display: block;
+}
+.lightbox-caption {
+  color: white;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+.lightbox-close {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox-close:hover { background: rgba(255, 255, 255, 0.3); }
