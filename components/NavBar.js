@@ -30,6 +30,7 @@ export default function NavBar() {
         <>
           <a href="/" className={pathname === '/' ? 'active' : ''}>Timeline</a>
           <a href="/upload" className={pathname === '/upload' ? 'active' : ''}>Upload</a>
+          <a href="/share" className={pathname === '/share' ? 'active' : ''}>Share</a>
         </>
       )}
       {loggedIn ? (

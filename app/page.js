@@ -1,16 +1,22 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewingOwnerId = searchParams.get('vault');
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [myUserId, setMyUserId] = useState(null);
   const [memories, setMemories] = useState([]);
   const [allTags, setAllTags] = useState([]);
+  const [albums, setAlbums] = useState([]);
   const [activeTag, setActiveTag] = useState(null);
+  const [activeAlbum, setActiveAlbum] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [deletingAlbumId, setDeletingAlbumId] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -18,6 +24,7 @@ export default function Home() {
         router.replace('/login');
       } else {
         setCheckingAuth(false);
+        setMyUserId(session.user.id);
       }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -29,12 +36,24 @@ export default function Home() {
   useEffect(() => {
     if (checkingAuth) return;
     loadTags();
+    loadAlbums();
     loadMemories();
-  }, [activeTag, checkingAuth]);
+  }, [activeTag, activeAlbum, checkingAuth, viewingOwnerId, myUserId]);
 
   async function loadTags() {
-    const { data } = await supabase.from('tags').select('*').order('name');
+    const ownerId = viewingOwnerId || myUserId;
+    let q = supabase.from('tags').select('*').order('name');
+    if (ownerId) q = q.eq('user_id', ownerId);
+    const { data } = await q;
     setAllTags(data || []);
+  }
+
+  async function loadAlbums() {
+    const ownerId = viewingOwnerId || myUserId;
+    let q = supabase.from('albums').select('*').order('name');
+    if (ownerId) q = q.eq('user_id', ownerId);
+    const { data } = await q;
+    setAlbums(data || []);
   }
 
   async function loadMemories() {
@@ -44,6 +63,10 @@ export default function Home() {
       .select('*, memory_tags(tag_id, tags(name))')
       .order('taken_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
+
+    const ownerId = viewingOwnerId || myUserId;
+    if (ownerId) query = query.eq('user_id', ownerId);
+    if (activeAlbum) query = query.eq('album_id', activeAlbum);
 
     const { data, error } = await query;
     if (!error && data) {
@@ -97,6 +120,28 @@ export default function Home() {
     setDeletingId(null);
   }
 
+  async function handleDeleteAlbum(e, album) {
+    e.stopPropagation();
+    const confirmed = window.confirm(
+      `Delete the folder "${album.name}"? Memories inside it are kept — they'll just no longer be in a folder.`
+    );
+    if (!confirmed) return;
+
+    setDeletingAlbumId(album.id);
+
+    const { error } = await supabase.from('albums').delete().eq('id', album.id);
+
+    if (error) {
+      alert(`Could not delete folder: ${error.message}`);
+      setDeletingAlbumId(null);
+      return;
+    }
+
+    if (activeAlbum === album.id) setActiveAlbum(null);
+    setAlbums((prev) => prev.filter((a) => a.id !== album.id));
+    setDeletingAlbumId(null);
+  }
+
   const groups = memories.reduce((acc, m) => {
     const day = (m.taken_at || m.created_at || '').slice(0, 10) || 'Undated';
     acc[day] = acc[day] || [];
@@ -106,14 +151,44 @@ export default function Home() {
 
   if (checkingAuth) return <p>Loading...</p>;
 
+  const isReadOnly = !!viewingOwnerId && viewingOwnerId !== myUserId;
+
   return (
     <div>
+      {albums.length > 0 && (
+        <div className="tag-search">
+          <span
+            className={`tag-pill folder-pill ${!activeAlbum ? 'active' : ''}`}
+            onClick={() => setActiveAlbum(null)}
+          >
+            All folders
+          </span>
+          {albums.map((a) => (
+            <span
+              key={a.id}
+              className={`tag-pill folder-pill ${activeAlbum === a.id ? 'active' : ''}`}
+              onClick={() => setActiveAlbum(a.id)}
+            >
+              📁 {a.name}
+              <button
+                className="pill-delete"
+                onClick={(e) => handleDeleteAlbum(e, a)}
+                disabled={deletingAlbumId === a.id}
+                title="Delete this folder"
+              >
+                {deletingAlbumId === a.id ? '...' : '✕'}
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="tag-search">
         <span
           className={`tag-pill ${!activeTag ? 'active' : ''}`}
           onClick={() => setActiveTag(null)}
         >
-          All
+          All tags
         </span>
         {allTags.map((t) => (
           <span
@@ -146,14 +221,16 @@ export default function Home() {
                 ) : (
                   <img src={m.url} alt={m.caption || ''} title={m.caption} />
                 )}
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDelete(m)}
-                  disabled={deletingId === m.id}
-                  title="Delete this memory"
-                >
-                  {deletingId === m.id ? '...' : '✕'}
-                </button>
+                {!isReadOnly && (
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(m)}
+                    disabled={deletingId === m.id}
+                    title="Delete this memory"
+                  >
+                    {deletingId === m.id ? '...' : '✕'}
+                  </button>
+                )}
               </div>
             ))}
           </div>

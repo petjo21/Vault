@@ -2,6 +2,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
+async function claimPendingShares(user) {
+  await supabase
+    .from('shares')
+    .update({ shared_with_user_id: user.id })
+    .eq('shared_with_email', user.email)
+    .is('shared_with_user_id', null);
+}
 
 export default function Login() {
   const router = useRouter();
@@ -35,7 +42,9 @@ export default function Login() {
         setMode('login');
         return;
       }
-      router.replace('/');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await claimPendingShares(user);
+    router.replace('/');
       return;
     }
 

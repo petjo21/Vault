@@ -6,14 +6,17 @@ import { supabase } from '../../lib/supabaseClient';
 export default function Upload() {
   const router = useRouter();
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [items, setItems] = useState([]);
   const [caption, setCaption] = useState('');
   const [takenAt, setTakenAt] = useState('');
   const [tags, setTags] = useState('');
+  const [albums, setAlbums] = useState([]);
+  const [albumChoice, setAlbumChoice] = useState('');
+  const [newAlbumName, setNewAlbumName] = useState('');
   const [status, setStatus] = useState('');
   const [fileInputKey, setFileInputKey] = useState(0);
   const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -21,6 +24,7 @@ export default function Upload() {
         router.replace('/login');
       } else {
         setCheckingAuth(false);
+        loadAlbums();
       }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -29,39 +33,48 @@ export default function Upload() {
     return () => listener.subscription.unsubscribe();
   }, [router]);
 
-  function pickFile(f) {
-    if (!f) return;
-    setFile(f);
-    setPreviewUrl(URL.createObjectURL(f));
+  async function loadAlbums() {
+    const { data } = await supabase.from('albums').select('*').order('name');
+    setAlbums(data || []);
+  }
+
+  function addFiles(fileList) {
+    const newItems = Array.from(fileList).map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setItems((prev) => [...prev, ...newItems]);
+  }
+
+  function removeItem(index) {
+    setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
   function handleDrop(e) {
     e.preventDefault();
     setDragActive(false);
-    if (e.dataTransfer.files?.[0]) pickFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
   }
 
-  async function handleUpload(e) {
-    e.preventDefault();
-    setStatus('Uploading...');
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setStatus('Please log in first.');
-      return;
+  async function resolveAlbumId(user) {
+    if (newAlbumName.trim()) {
+      const { data: created, error } = await supabase
+        .from('albums')
+        .insert({ name: newAlbumName.trim(), user_id: user.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return created.id;
     }
+    return albumChoice || null;
+  }
 
+  async function uploadOne(file, user, albumId) {
     const mediaType = file.type.startsWith('video') ? 'video' : 'photo';
     const path = `${user.id}/${Date.now()}-${file.name}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('memories')
-      .upload(path, file);
-
-    if (uploadError) {
-      setStatus(`Upload failed: ${uploadError.message}`);
-      return;
-    }
+    const { error: uploadError } = await supabase.storage.from('memories').upload(path, file);
+    if (uploadError) throw new Error(`${file.name}: ${uploadError.message}`);
 
     const { data: memory, error: insertError } = await supabase
       .from('memories')
@@ -70,14 +83,11 @@ export default function Upload() {
         media_type: mediaType,
         caption,
         taken_at: takenAt || null,
+        album_id: albumId,
       })
       .select()
       .single();
-
-    if (insertError) {
-      setStatus(`Saved file, but failed to save details: ${insertError.message}`);
-      return;
-    }
+    if (insertError) throw new Error(`${file.name}: ${insertError.message}`);
 
     const tagNames = tags.split(',').map((t) => t.trim()).filter(Boolean);
     for (const name of tagNames) {
@@ -90,54 +100,118 @@ export default function Upload() {
         await supabase.from('memory_tags').insert({ memory_id: memory.id, tag_id: tag.id });
       }
     }
+  }
 
-    setStatus('Uploaded!');
-    setFile(null);
-    setPreviewUrl(null);
+  async function handleUpload(e) {
+    e.preventDefault();
+    if (items.length === 0) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setStatus('Please log in first.');
+      return;
+    }
+
+    let albumId = null;
+    try {
+      albumId = await resolveAlbumId(user);
+    } catch (err) {
+      setStatus(`Could not create album: ${err.message}`);
+      return;
+    }
+
+    setUploading(true);
+    let succeeded = 0;
+    for (let i = 0; i < items.length; i++) {
+      setStatus(`Uploading ${i + 1} of ${items.length}...`);
+      try {
+        await uploadOne(items[i].file, user, albumId);
+        succeeded++;
+      } catch (err) {
+        setStatus(`Stopped at file ${i + 1}: ${err.message}`);
+        setUploading(false);
+        return;
+      }
+    }
+
+    setStatus(`Uploaded ${succeeded} item${succeeded === 1 ? '' : 's'}!`);
+    setItems([]);
     setCaption('');
     setTakenAt('');
     setTags('');
+    setAlbumChoice('');
+    setNewAlbumName('');
     setFileInputKey((k) => k + 1);
+    setUploading(false);
+    loadAlbums();
   }
 
   if (checkingAuth) return <p>Loading...</p>;
 
   return (
     <form className="form" onSubmit={handleUpload}>
-      <h2>Add a memory</h2>
+      <h2>Add memories</h2>
 
       <label
-        className={`dropzone ${dragActive ? 'active' : ''} ${previewUrl ? 'has-file' : ''}`}
+        className={`dropzone ${dragActive ? 'active' : ''}`}
         onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
         onDragLeave={() => setDragActive(false)}
         onDrop={handleDrop}
       >
-        {previewUrl ? (
-          file.type.startsWith('video') ? (
-            <video src={previewUrl} className="dropzone-preview" muted />
-          ) : (
-            <img src={previewUrl} className="dropzone-preview" alt="Preview" />
-          )
-        ) : (
-          <div className="dropzone-hint">
-            <span>Drag a photo or video here</span>
-            <span className="dropzone-sub">or click to browse</span>
-          </div>
-        )}
+        <div className="dropzone-hint">
+          <span>Drag photos or videos here</span>
+          <span className="dropzone-sub">or click to browse — you can select several at once</span>
+        </div>
         <input
           key={fileInputKey}
           type="file"
           accept="image/*,video/*"
-          onChange={(e) => pickFile(e.target.files[0])}
-          required
+          multiple
+          onChange={(e) => addFiles(e.target.files)}
           style={{ display: 'none' }}
         />
       </label>
 
-      <input type="text" placeholder="Caption" value={caption} onChange={(e) => setCaption(e.target.value)} />
+      {items.length > 0 && (
+        <div className="thumb-strip">
+          {items.map((item, i) => (
+            <div className="thumb" key={i}>
+              {item.file.type.startsWith('video') ? (
+                <video src={item.previewUrl} muted />
+              ) : (
+                <img src={item.previewUrl} alt="" />
+              )}
+              <button type="button" className="thumb-remove" onClick={() => removeItem(i)}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <input type="text" placeholder="Caption (applied to all)" value={caption} onChange={(e) => setCaption(e.target.value)} />
       <input type="date" value={takenAt} onChange={(e) => setTakenAt(e.target.value)} />
       <input type="text" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
-      <button type="submit">Upload</button>
+
+      <label className="field-label">Folder / Album</label>
+      <select
+        value={albumChoice}
+        onChange={(e) => { setAlbumChoice(e.target.value); setNewAlbumName(''); }}
+        disabled={!!newAlbumName.trim()}
+      >
+        <option value="">No folder</option>
+        {albums.map((a) => (
+          <option key={a.id} value={a.id}>{a.name}</option>
+        ))}
+      </select>
+      <input
+        type="text"
+        placeholder="...or create a new folder"
+        value={newAlbumName}
+        onChange={(e) => { setNewAlbumName(e.target.value); if (e.target.value.trim()) setAlbumChoice(''); }}
+      />
+
+      <button type="submit" disabled={items.length === 0 || uploading}>
+        {uploading ? 'Uploading...' : `Upload ${items.length || ''}`.trim()}
+      </button>
       {status && <p>{status}</p>}
     </form>
   );
