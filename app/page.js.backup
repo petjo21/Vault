@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
@@ -21,7 +21,6 @@ function HomeContent() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [lightboxItem, setLightboxItem] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -44,14 +43,6 @@ function HomeContent() {
     loadAlbums();
     loadMemories();
   }, [activeTag, activeAlbum, checkingAuth, viewingOwnerId, myUserId, searchTerm]);
-
-  useEffect(() => {
-    function handleKeyDown(e) {
-      if (e.key === 'Escape') setLightboxItem(null);
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   async function loadTags() {
     const ownerId = viewingOwnerId || myUserId;
@@ -135,7 +126,6 @@ function HomeContent() {
 
     setMemories((prev) => prev.filter((m) => m.id !== memory.id));
     setDeletingId(null);
-    if (lightboxItem?.id === memory.id) setLightboxItem(null);
   }
 
   async function handleDeleteAlbum(e, album) {
@@ -227,14 +217,6 @@ function HomeContent() {
     setBulkDeleting(false);
   }
 
-  function handleItemClick(m) {
-    if (selectMode) {
-      toggleSelected(m.id);
-    } else if (m.media_type !== 'video') {
-      setLightboxItem(m);
-    }
-  }
-
   const groups = memories.reduce((acc, m) => {
     const day = (m.taken_at || m.created_at || '').slice(0, 10) || 'Undated';
     acc[day] = acc[day] || [];
@@ -249,7 +231,7 @@ function HomeContent() {
   return (
     <div>
       <div className="search-bar">
-        <span className="search-icon">a</span>
+        <span className="search-icon">⌕</span>
         <input
           type="text"
           placeholder="Search captions..."
@@ -290,14 +272,14 @@ function HomeContent() {
               className={`tag-pill folder-pill ${activeAlbum === a.id ? 'active' : ''}`}
               onClick={() => setActiveAlbum(a.id)}
             >
-              [folder] {a.name}
+              📁 {a.name}
               <button
                 className="pill-delete"
                 onClick={(e) => handleDeleteAlbum(e, a)}
                 disabled={deletingAlbumId === a.id}
                 title="Delete this folder"
               >
-                {deletingAlbumId === a.id ? '...' : 'x'}
+                {deletingAlbumId === a.id ? '...' : '✕'}
               </button>
             </span>
           ))}
@@ -323,7 +305,7 @@ function HomeContent() {
               onClick={(e) => handleDeleteTag(e, t)}
               title="Delete this tag"
             >
-              x
+              ✕
             </button>
           </span>
         ))}
@@ -334,7 +316,7 @@ function HomeContent() {
         <div className="empty-state">
           <h2>The vault is empty.</h2>
           <p>Every archive starts with one print. Upload your first memory to begin the timeline.</p>
-          <a href="/upload" className="empty-cta">Add a memory -&gt;</a>
+          <a href="/upload" className="empty-cta">Add a memory →</a>
         </div>
       )}
 
@@ -349,7 +331,7 @@ function HomeContent() {
               <div
                 className={`memory-item ${selectMode && selectedIds.has(m.id) ? 'selected' : ''}`}
                 key={m.id}
-                onClick={() => handleItemClick(m)}
+                onClick={() => { if (selectMode) toggleSelected(m.id); }}
               >
                 {m.media_type === 'video' ? (
                   <video src={m.url} controls={!selectMode} title={m.caption} />
@@ -358,20 +340,17 @@ function HomeContent() {
                 )}
                 {selectMode ? (
                   <span className="select-checkbox">
-                    {selectedIds.has(m.id) ? 'v' : ''}
+                    {selectedIds.has(m.id) ? '✓' : ''}
                   </span>
                 ) : (
                   !isReadOnly && (
                     <button
                       className="delete-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(m);
-                      }}
+                      onClick={() => handleDelete(m)}
                       disabled={deletingId === m.id}
                       title="Delete this memory"
                     >
-                      {deletingId === m.id ? '...' : 'x'}
+                      {deletingId === m.id ? '...' : '✕'}
                     </button>
                   )
                 )}
@@ -380,24 +359,6 @@ function HomeContent() {
           </div>
         </div>
       ))}
-
-      {lightboxItem && (
-        <div className="lightbox-overlay" onClick={() => setLightboxItem(null)}>
-          <button
-            className="lightbox-close"
-            onClick={() => setLightboxItem(null)}
-            title="Close"
-          >
-            x
-          </button>
-          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <img src={lightboxItem.url} alt={lightboxItem.caption || ''} />
-            {lightboxItem.caption && (
-              <p className="lightbox-caption">{lightboxItem.caption}</p>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
