@@ -6,11 +6,13 @@ import { supabase } from '../../lib/supabaseClient';
 export default function Profile() {
   const router = useRouter();
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [status, setStatus] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -18,19 +20,21 @@ export default function Profile() {
         router.replace('/login');
       } else {
         setCheckingAuth(false);
+        setEmail(session.user.email || '');
         loadProfile(session.user.id);
       }
     });
   }, [router]);
 
   async function loadProfile(userId) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    const { data } = await supabase
+      .from('profiles')
+      .select('username, avatar_url')
+      .eq('id', userId)
+      .single();
     if (data) {
-      setDisplayName(data.display_name || '');
-      if (data.avatar_path) {
-        const { data: pub } = supabase.storage.from('avatars').getPublicUrl(data.avatar_path);
-        setAvatarUrl(pub.publicUrl);
-      }
+      setUsername(data.username || '');
+      setAvatarUrl(data.avatar_url || null);
     }
   }
 
@@ -42,23 +46,30 @@ export default function Profile() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    let avatarPath = null;
+    let newAvatarUrl = avatarUrl;
     if (avatarFile) {
-      avatarPath = `${user.id}/avatar-${Date.now()}-${avatarFile.name}`;
+      const path = `${user.id}/avatar-${Date.now()}-${avatarFile.name}`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(avatarPath, avatarFile);
+        .upload(path, avatarFile, { upsert: true });
       if (uploadError) {
-        setStatus(`Could not upload avatar: ${uploadError.message}`);
+        setStatus(`Could not upload photo: ${uploadError.message}`);
         setSaving(false);
         return;
       }
+      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+      newAvatarUrl = pub.publicUrl;
     }
 
-    const updates = { id: user.id, display_name: displayName.trim(), updated_at: new Date() };
-    if (avatarPath) updates.avatar_path = avatarPath;
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        username: username.trim(),
+        avatar_url: newAvatarUrl,
+        updated_at: new Date(),
+      });
 
-    const { error } = await supabase.from('profiles').upsert(updates);
     setSaving(false);
 
     if (error) {
@@ -66,47 +77,70 @@ export default function Profile() {
       return;
     }
     setStatus('Saved!');
-    if (avatarPath) {
-      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(avatarPath);
-      setAvatarUrl(pub.publicUrl);
-    }
+    setAvatarUrl(newAvatarUrl);
     setAvatarFile(null);
+  }
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await supabase.auth.signOut();
+    router.replace('/login');
   }
 
   if (checkingAuth) return <p>Loading...</p>;
 
+  const initials = (username || email || '?').trim().slice(0, 1).toUpperCase();
+  const previewSrc = avatarFile ? URL.createObjectURL(avatarFile) : avatarUrl;
+
   return (
-    <form className="form" onSubmit={handleSave} style={{ maxWidth: 420, margin: '0 auto' }}>
-      <h2>Your profile</h2>
+    <div className="profile-page">
+      <form className="profile-header-card" onSubmit={handleSave}>
+        <div className="profile-avatar-wrap">
+          <div className="profile-avatar-lg">
+            {previewSrc ? <img src={previewSrc} alt="Your avatar" /> : initials}
+          </div>
+          <label className="avatar-edit-badge" title="Change photo">
+            📷
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => setAvatarFile(e.target.files[0])}
+            />
+          </label>
+        </div>
 
-      <div className="avatar-picker">
-        <img
-          src={avatarFile ? URL.createObjectURL(avatarFile) : (avatarUrl || '/default-avatar.png')}
-          alt="Avatar"
-          className="avatar-preview"
-          onError={(e) => { e.target.style.display = 'none'; }}
+        <input
+          className="profile-name-input"
+          type="text"
+          placeholder="Your name"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
         />
-        <label className="avatar-upload-btn">
-          Change photo
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={(e) => setAvatarFile(e.target.files[0])}
-          />
-        </label>
+        <p className="profile-email">{email}</p>
+
+        <button type="submit" disabled={saving} className="profile-save-btn">
+          {saving ? 'Saving...' : 'Save changes'}
+        </button>
+        {status && <p className="profile-status">{status}</p>}
+      </form>
+
+      <div className="settings-list">
+        <a href="/change-password" className="settings-row">
+          <span className="settings-row-icon">🔒</span>
+          <span className="settings-row-label">Change password</span>
+          <span className="settings-row-chevron">›</span>
+        </a>
+        <a href="/share" className="settings-row">
+          <span className="settings-row-icon">👥</span>
+          <span className="settings-row-label">People with access</span>
+          <span className="settings-row-chevron">›</span>
+        </a>
+        <button type="button" className="settings-row settings-row-danger" onClick={handleLogout} disabled={loggingOut}>
+          <span className="settings-row-icon">↪</span>
+          <span className="settings-row-label">{loggingOut ? 'Logging out...' : 'Log out'}</span>
+        </button>
       </div>
-
-      <label className="field-label">Display name</label>
-      <input
-        type="text"
-        placeholder="What should others call you?"
-        value={displayName}
-        onChange={(e) => setDisplayName(e.target.value)}
-      />
-
-      <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save profile'}</button>
-      {status && <p>{status}</p>}
-    </form>
+    </div>
   );
 }
