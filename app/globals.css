@@ -1898,3 +1898,74 @@ main { padding-bottom: 6rem; }
 .settings-row-chevron { color: var(--ink-dim); font-size: 1.2rem; }
 .settings-row-danger { color: #d93025; }
 .settings-row-danger:hover { background: #fdeeee; }
+/* ---------- Responsive: tablets & phones ---------- */
+@media (max-width: 640px) {
+  .nav {
+    padding: 0.7rem 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-size: 1rem;
+    margin-right: 0.3rem;
+  }
+  .nav a {
+    font-size: 0.82rem;
+  }
+
+  main {
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .day-heading {
+    font-size: 0.85rem;
+  }
+
+  .form {
+    padding: 1.25rem;
+    max-width: 100%;
+  }
+
+  .auth-page {
+    padding: 1rem;
+  }
+
+  .empty-state {
+    padding: 3rem 1rem;
+  }
+  .empty-state h2 {
+    font-size: 1.3rem;
+  }
+
+  .lightbox-overlay {
+    padding: 0.75rem;
+  }
+  .lightbox-close {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 34px;
+    height: 34px;
+  }
+
+  .settings-dropdown {
+    min-width: 160px;
+  }
+}
+
+@media (max-width: 400px) {
+  .nav {
+    gap: 0.6rem;
+  }
+  .nav a {
+    font-size: 0.78rem;
+    padding: 0.3rem 0;
+  }
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  }
+}
