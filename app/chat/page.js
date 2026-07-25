@@ -10,6 +10,7 @@ function ChatContent() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [myUserId, setMyUserId] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [partnerProfile, setPartnerProfile] = useState(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
@@ -28,6 +29,7 @@ function ChatContent() {
   useEffect(() => {
     if (!myUserId || !partnerId) return;
     loadMessages();
+    loadPartnerProfile();
 
     const channel = supabase
       .channel(`chat-${[myUserId, partnerId].sort().join('-')}`)
@@ -53,6 +55,10 @@ function ChatContent() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  async function loadPartnerProfile() {
+    const { data } = await supabase.from('profiles').select('username, avatar_url').eq('id', partnerId).single();
+    setPartnerProfile(data);
+  }
   async function loadMessages() {
     const { data } = await supabase
       .from('messages')
@@ -87,8 +93,18 @@ function ChatContent() {
     );
   }
 
-  return (
+    return (
     <div className="chat-wrap">
+      <div className="chat-header">
+        <div className="chat-header-avatar">
+          {partnerProfile?.avatar_url ? (
+            <img src={partnerProfile.avatar_url} alt="" />
+          ) : (
+            <span>{partnerProfile?.username?.[0]?.toUpperCase() || '?'}</span>
+          )}
+        </div>
+        <span>{partnerProfile?.username || 'Loading...'}</span>
+      </div>
       <div className="chat-thread">
         {messages.map((m) => (
           <div

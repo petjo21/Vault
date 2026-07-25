@@ -7,8 +7,9 @@ export default function Share() {
   const router = useRouter();
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [email, setEmail] = useState('');
-  const [myShares, setMyShares] = useState([]);
+ const [myShares, setMyShares] = useState([]);
   const [sharedWithMe, setSharedWithMe] = useState([]);
+  const [profilesById, setProfilesById] = useState({});
   const [status, setStatus] = useState('');
 
   useEffect(() => {
@@ -38,6 +39,14 @@ export default function Share() {
       .select('*')
       .eq('shared_with_user_id', user.id);
     setSharedWithMe(withMe || []);
+
+    const ownerIds = (withMe || []).map((s) => s.owner_id);
+    if (ownerIds.length > 0) {
+      const { data: profs } = await supabase.from('profiles').select('id, username, avatar_url').in('id', ownerIds);
+      const map = {};
+      (profs || []).forEach((p) => { map[p.id] = p; });
+      setProfilesById(map);
+    }
   }
 
   async function handleInvite(e) {
@@ -110,7 +119,7 @@ export default function Share() {
           <h2 style={{ marginTop: '2.5rem' }}>Vaults shared with you</h2>
           {sharedWithMe.map((s) => (
             <div key={s.id} className="share-row">
-              <span>Owner ID: {s.owner_id.slice(0, 8)}...</span>
+              <span>{profilesById[s.owner_id]?.username || `User ${s.owner_id.slice(0, 8)}`}</span>
               <a href={`/chat?with=${s.owner_id}`} className="chat-link">💬 Chat</a>
               <a href={`/?vault=${s.owner_id}`} className="empty-cta" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}>
                 View
